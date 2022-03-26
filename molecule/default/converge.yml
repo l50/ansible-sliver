@@ -1,0 +1,53 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    server_path: /root/sliver-server
+    client_path: /usr/local/bin/sliver
+    sliver_service_path: /etc/systemd/system/sliver.service
+    sliver_client_config_path: /root/.sliver-client/configs
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 600
+      when: ansible_os_family == 'Debian'
+
+    - name: Install dependencies (Debian-based distros)
+      ansible.builtin.apt:
+        name:
+          - curl
+          - gpg-agent
+        state: present
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install dependencies (Red Hat-based distros)
+      ansible.builtin.dnf:
+        name:
+          - curl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == 'RedHat'
+
+  roles:
+    - role: l50.sliver
+
+  post_tasks:
+    - name: Test sliver server is installed
+      ansible.builtin.stat:
+        path: "{{ server_path }}"
+
+    - name: Test sliver client is installed
+      ansible.builtin.stat:
+        path: "{{ client_path }}"
+
+    - name: Test sliver service is installed
+      ansible.builtin.stat:
+        path: "{{ sliver_service_path }}"
+
+    - name: Test sliver operator config path is present
+      ansible.builtin.stat:
+        path: "{{ sliver_client_config_path }}"
