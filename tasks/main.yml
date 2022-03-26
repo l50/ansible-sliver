@@ -6,6 +6,7 @@
     mode: 0755
     owner: root
     group: root
+  changed_when: false
 
 - name: Run the sliver installer
   ansible.builtin.command: "{{ download_path }}"
@@ -15,3 +16,4 @@
   ansible.builtin.file:
     path: "{{ download_path }}"
     state: absent
+  changed_when: false
