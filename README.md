@@ -45,7 +45,7 @@ None.
 Make sure to run the following to develop locally:
 
 ```bash
-PATH_TO_ROLE="${HOME}/.ansible/Workspace/ansible-sliver"
+PATH_TO_ROLE="${PWD}"
 ln -s "${PATH_TO_ROLE}" "${HOME}/.ansible/roles/l50.sliver"
 ```
 
