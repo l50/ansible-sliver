@@ -6,11 +6,11 @@ galaxy_info:
   company: techvomit
   license: MIT
   role_name: sliver
-  min_ansible_version: 2.8
+  min_ansible_version: "2.8"
   platforms:
     - name: EL
       versions:
-        - 8
+        - all
     - name: Ubuntu
       versions:
         - all
