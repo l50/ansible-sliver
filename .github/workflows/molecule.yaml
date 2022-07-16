@@ -12,14 +12,6 @@ defaults:
 jobs:
   molecule:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        distro:
-          - ubuntu2004
-          - ubuntu1804
-          - centos8
-          - debian10
-          - debian11
 
     steps:
       - name: Checkout code
@@ -40,4 +32,4 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_DISTRO: ubuntu2004
