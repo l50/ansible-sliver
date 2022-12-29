@@ -1,4 +1,6 @@
 ---
 deb_packages:
+  - apt-utils
   - curl
   - gpg-agent
+  - packaging-dev

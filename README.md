@@ -79,6 +79,10 @@ ln -s "${PATH_TO_ROLE}" "${HOME}/.ansible/roles/l50.sliver"
 To test changes made to this role, run the following commands:
 
 ```bash
+# If on an Apple Silicon machine:
+if [[ "$(uname -a | awk '{ print $NF }')" == "arm64" ]]; then
+  export DOCKER_DEFAULT_PLATFORM=linux/arm64
+fi
 molecule create
 molecule converge
 molecule idempotence
