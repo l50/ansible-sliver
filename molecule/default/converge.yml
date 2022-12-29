@@ -8,33 +8,6 @@
     sliver_service_path: /etc/systemd/system/sliver.service
     sliver_client_config_path: /root/.sliver-client/configs
 
-  pre_tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 600
-      when: ansible_os_family == 'Debian'
-
-    - name: Install dependencies (Debian-based distros)
-      ansible.builtin.apt:
-        name:
-          - curl
-          - gpg-agent
-        state: present
-      when: ansible_os_family == 'Debian'
-
-    - name: Update dnf cache
-      ansible.builtin.dnf:
-        update_cache: true
-      when: ansible_os_family == 'RedHat'
-
-    - name: Install dependencies (Red Hat-based distros)
-      ansible.builtin.dnf:
-        name:
-          - curl
-        state: present
-      when: ansible_os_family == 'RedHat'
-
   roles:
     - role: l50.sliver
 

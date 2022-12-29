@@ -1,0 +1,4 @@
+---
+deb_packages:
+  - curl
+  - gpg-agent

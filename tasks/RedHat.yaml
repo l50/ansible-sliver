@@ -1,0 +1,7 @@
+---
+- name: Install dependencies (Red Hat-based distros)
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items: "{{ rh_packages }}"

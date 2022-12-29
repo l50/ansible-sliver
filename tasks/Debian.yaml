@@ -1,0 +1,9 @@
+---
+- name: Install dependencies (Debian-based distros)
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  with_items: "{{ deb_packages }}"
