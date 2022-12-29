@@ -1,19 +1,17 @@
 ---
-- name: Download sliver installer
-  ansible.builtin.get_url:
-    url: "{{ install_script_url }}"
-    dest: "{{ download_path }}"
+- name: Create sliver installer from template
+  ansible.builtin.template:
+    src: install-sliver.sh.j2
+    dest: "{{ install_path }}"
     mode: 0755
-    owner: root
-    group: root
   changed_when: false
 
 - name: Run the sliver installer
-  ansible.builtin.command: "{{ download_path }}"
+  ansible.builtin.command: "{{ install_path }}"
   changed_when: false
 
 - name: Remove the sliver installer
   ansible.builtin.file:
-    path: "{{ download_path }}"
+    path: "{{ install_path }}"
     state: absent
   changed_when: false

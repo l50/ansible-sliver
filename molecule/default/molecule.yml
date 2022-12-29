@@ -1,8 +1,15 @@
 ---
+# Use Ansible Galaxy to install dependencies
 dependency:
   name: galaxy
+  options:
+    # Install required collections
+    requirements-file: ../../requirements.yml
+
+# Run molecule inside of a docker container
 driver:
   name: docker
+
 platforms:
   - name: centos-sliver
     image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos8}-ansible:latest"
@@ -10,12 +17,18 @@ platforms:
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+
   - name: ubuntu-sliver
     image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+
+  - name: kali-attack-box
+    image: cisagov/docker-kali-ansible:latest
+    pre_build_image: true
+
 provisioner:
   name: ansible
   playbooks:

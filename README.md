@@ -8,38 +8,60 @@
 This role installs [Sliver](https://github.com/BishopFox/sliver.git)
 on Linux hosts.
 
+---
+
 ## Requirements
 
 N/A
+
+---
 
 ## Role Variables
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
-URL of the sliver install script.
+Path to the Sliver install script.
 
 ```yaml
-install_script_url: https://sliver.sh/install
+install_path: /tmp/install-sliver.sh
 ```
 
-The location where the sliver install script will be downloaded.
+Setup Sliver systemd service (default: false).
 
 ```yaml
-download_path: /tmp/install.sh
+setup_systemd: true
 ```
 
-## Dependencies
+---
 
-None.
+## Example Playbooks
 
-## Example Playbook
+Install Sliver and setup systemd service.
 
 ```yaml
 - hosts: all
-  become: yes
+  become: true
+  vars:
+    setup_systemd: true
   roles:
     - role: l50.sliver
 ```
+
+Install and configure Sliver with custom file paths.
+
+```yaml
+- hosts: all
+  become: true
+  vars:
+    server_path: /root/sliver-server
+    client_path: /usr/local/bin/sliver
+    sliver_service_path: /etc/systemd/system/sliver.service
+    sliver_client_config_path: /root/.sliver-client/configs
+  roles:
+    - role: l50.sliver
+```
+
+---
 
 ## Local Development
 
@@ -50,13 +72,16 @@ PATH_TO_ROLE="${PWD}"
 ln -s "${PATH_TO_ROLE}" "${HOME}/.ansible/roles/l50.sliver"
 ```
 
+---
+
 ## Testing
 
-To test that the role is working, run the following commands:
+To test changes made to this role, run the following commands:
 
 ```bash
 molecule create
 molecule converge
+molecule idempotence
 # If everything passed, tear down the docker container spawned by molecule:
 molecule destroy
 ```

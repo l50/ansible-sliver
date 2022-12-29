@@ -11,7 +11,7 @@
   pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         cache_valid_time: 600
       when: ansible_os_family == 'Debian'
 
@@ -21,12 +21,11 @@
           - curl
           - gpg-agent
         state: present
-        update_cache: yes
       when: ansible_os_family == 'Debian'
 
     - name: Update dnf cache
       ansible.builtin.dnf:
-        update_cache: yes
+        update_cache: true
       when: ansible_os_family == 'RedHat'
 
     - name: Install dependencies (Red Hat-based distros)
@@ -34,7 +33,6 @@
         name:
           - curl
         state: present
-        update_cache: yes
       when: ansible_os_family == 'RedHat'
 
   roles:
@@ -52,6 +50,7 @@
     - name: Test sliver service is installed
       ansible.builtin.stat:
         path: "{{ sliver_service_path }}"
+      when: setup_systemd
 
     - name: Test sliver operator config path is present
       ansible.builtin.stat:
