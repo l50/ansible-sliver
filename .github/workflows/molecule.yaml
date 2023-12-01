@@ -25,11 +25,11 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip3 install ansible molecule[docker] docker
+        run: python3 -m pip install ansible molecule[docker] docker
 
       - name: Test role with molecule
         run: molecule test
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          MOLECULE_DISTRO: ubuntu2004
+          MOLECULE_DISTRO: ubuntu2204
