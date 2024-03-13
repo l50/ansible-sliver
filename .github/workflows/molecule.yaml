@@ -3,33 +3,29 @@ name: Molecule Test
 on:
   pull_request:
   push:
-    branches: [main]
-
-defaults:
-  run:
-    working-directory: "l50.sliver"
+    branches:
+      - main
 
 jobs:
-  molecule:
+  role_test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          path: "l50.sliver"
+        uses: actions/checkout@v3.6.0
 
-      - name: Set up Python 3
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: python3 -m pip install ansible molecule[docker] docker
+        run: |
+          python3 -m pip install ansible molecule docker
+          python3 -m pip install molecule-docker
 
-      - name: Test role with molecule
+      - name: Run Molecule Test
         run: molecule test
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          MOLECULE_DISTRO: ubuntu2204
