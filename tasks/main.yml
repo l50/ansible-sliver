@@ -1,0 +1,53 @@
+---
+- name: Include common tasks
+  ansible.builtin.include_tasks: user_setup.yml
+
+- name: Include common variables
+  ansible.builtin.include_vars: "main.yml"
+  when: ansible_os_family in ['Debian', 'RedHat']
+
+- name: Set DEBIAN_FRONTEND to noninteractive
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    line: 'DEBIAN_FRONTEND=noninteractive'
+    create: true
+    mode: '0644'
+  become: true
+  when: ansible_os_family == 'Debian'
+
+- name: Install distribution-specific packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ deb_packages }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+# Red Hat specific tasks
+- name: Configure .xinitrc for XFCE (Red Hat)
+  become: true
+  ansible.builtin.copy:
+    dest: "~/.xinitrc"
+    content: "exec /usr/bin/xfce4-session"
+    mode: "0644"
+  when: ansible_os_family == 'RedHat'
+  tags: rh-xinitrc
+
+- name: Get current systemd default target (Red Hat)
+  ansible.builtin.command:
+    cmd: systemctl get-default
+  register: systemd_units
+  check_mode: false
+  changed_when: false
+  when: ansible_os_family == 'RedHat'
+  tags: rh-systemd-check
+  # noqa command-instead-of-module
+
+- name: Set default target to graphical if not already set (Red Hat)
+  ansible.builtin.systemd:
+    name: graphical.target
+    state: started
+  when: ansible_os_family == 'RedHat' and "'graphical.target' not in systemd_units.stdout"
+  tags: rh-set-graphical

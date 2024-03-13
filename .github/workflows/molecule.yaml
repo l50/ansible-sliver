@@ -3,13 +3,10 @@ name: Molecule Test
 on:
   pull_request:
   push:
-    branches:
-      - main
 
 jobs:
   role_test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3.6.0

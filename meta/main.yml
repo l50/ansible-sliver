@@ -2,7 +2,7 @@
 galaxy_info:
   author: Jayson Grace
   namespace: l50
-  description: Install Sliver for Linux hosts.
+  description: Install sliver c2 on linux systems.
   company: techvomit
   license: MIT
   role_name: sliver
@@ -20,3 +20,5 @@ galaxy_info:
   galaxy_tags:
     - c2
     - offsec
+dependencies:
+  - role: cowdogmoo.workstation.package_management

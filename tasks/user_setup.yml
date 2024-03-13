@@ -1,0 +1,10 @@
+---
+- name: Create Sliver user
+  ansible.builtin.include_role:
+    name: cowdogmoo.workstation.user_setup
+  vars:
+    user_setup_default_users:
+      - username: "sliver"
+        usergroup: "sliver"
+        sudo: true
+        shell: /bin/bash
