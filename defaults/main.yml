@@ -1,3 +1,6 @@
 ---
 install_path: /tmp/install-sliver.sh
 setup_systemd: false
+sliver_default_user: sliver
+sliver_default_group: sliver
+sliver_default_shell: /bin/bash
