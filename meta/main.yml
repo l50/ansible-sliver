@@ -2,7 +2,7 @@
 galaxy_info:
   author: Jayson Grace
   namespace: l50
-  description: Install sliver c2 on linux systems.
+  description: Install Sliver C2 on Linux systems.
   company: techvomit
   license: MIT
   role_name: sliver

@@ -1,53 +1,109 @@
 ---
-- name: Include common tasks
-  ansible.builtin.include_tasks: user_setup.yml
+- name: Create Sliver user
+  ansible.builtin.include_role:
+    name: cowdogmoo.workstation.user_setup
+  vars:
+    user_setup_default_users:
+      - username: "sliver"
+        usergroup: "sliver"
+        sudo: true
+        shell: "{{ sliver_default_shell}}"
 
-- name: Include common variables
-  ansible.builtin.include_vars: "main.yml"
-  when: ansible_os_family in ['Debian', 'RedHat']
+- name: Install asdf and go
+  ansible.builtin.include_role:
+    name: cowdogmoo.workstation.asdf
+  vars:
+    asdf_users:
+      - username: "{{ sliver_default_user }}"
+        usergroup: "{{ sliver_default_group }}"
+        shell: "{{ sliver_default_shell }}"
+        plugins:
+          - name: golang
+            version: '1.22.0'
+            scope: "global"
 
-- name: Set DEBIAN_FRONTEND to noninteractive
+- name: Install required packages for Sliver
+  ansible.builtin.include_role:
+    name: cowdogmoo.workstation.package_management
+  vars:
+    package_management_common_install_packages: "{{ sliver_common_install_packages }}"
+    package_management_debian_specific_packages: "{{ sliver_debian_packages }}"
+    package_management_redhat_specific_packages: "{{ sliver_el_packages }}"
+
+- name: Configure Git to allow /opt/sliver as a safe directory
+  ansible.builtin.shell:
+    cmd: git config --global --add safe.directory /opt/sliver
+  become: true
+
+- name: Download and build Sliver
+  ansible.builtin.git:
+    repo: 'https://github.com/bishopfox/sliver.git'
+    dest: /opt/sliver
+    version: master
+  become: true
+
+- name: Change ownership of /opt/sliver
+  ansible.builtin.file:
+    path: /opt/sliver
+    owner: "{{ sliver_default_user }}"
+    group: "{{ sliver_default_group }}"
+    recurse: true
+  become: true
+
+- name: Add /opt/sliver to $PATH
   ansible.builtin.lineinfile:
-    path: /etc/environment
-    line: 'DEBIAN_FRONTEND=noninteractive'
-    create: true
+    path: /etc/profile
+    line: 'export PATH=$PATH:/opt/sliver'
+    insertafter: EOF
+  become: true
+
+- name: Ensure .profile exists for sliver user
+  ansible.builtin.file:
+    path: /home/sliver/.profile
+    state: touch
+    owner: sliver
+    group: sliver
     mode: '0644'
   become: true
-  when: ansible_os_family == 'Debian'
+  become_user: sliver
 
-- name: Install distribution-specific packages
+- name: Set GOPATH and PATH environment variables
+  ansible.builtin.lineinfile:
+    path: /home/sliver/.profile
+    line: "{{ item }}"
+    insertafter: EOF
+  loop:
+    - 'export GOPATH=/home/sliver/.asdf/installs/golang/1.22.0/packages'
+    - 'export PATH=/home/sliver/.asdf/shims:$PATH:$GOPATH/bin'
   become: true
-  ansible.builtin.package:
-    name: "{{ deb_packages }}"
-    state: present
-    update_cache: true
-  when: ansible_os_family == 'Debian'
+  become_user: sliver
+
+- name: Debug PATH environment variable
+  ansible.builtin.shell:
+    cmd: echo $PATH
+    chdir: /opt/sliver
+  become: true
+  become_user: sliver
+  register: debug_output
+
+- name: Print debug output
+  ansible.builtin.debug:
+    msg: "{{ debug_output.stdout }}"
+
+
+- name: Build Sliver with a custom PATH
+  ansible.builtin.shell:
+    cmd: gmake
+    chdir: /opt/sliver
   environment:
-    DEBIAN_FRONTEND: noninteractive
-
-# Red Hat specific tasks
-- name: Configure .xinitrc for XFCE (Red Hat)
+    PATH: "/home/sliver/.asdf/shims:{{ ansible_env.PATH }}"
   become: true
-  ansible.builtin.copy:
-    dest: "~/.xinitrc"
-    content: "exec /usr/bin/xfce4-session"
-    mode: "0644"
-  when: ansible_os_family == 'RedHat'
-  tags: rh-xinitrc
+  become_user: sliver
 
-- name: Get current systemd default target (Red Hat)
+
+
+- name: Unpack Sliver server
   ansible.builtin.command:
-    cmd: systemctl get-default
-  register: systemd_units
-  check_mode: false
-  changed_when: false
-  when: ansible_os_family == 'RedHat'
-  tags: rh-systemd-check
-  # noqa command-instead-of-module
-
-- name: Set default target to graphical if not already set (Red Hat)
-  ansible.builtin.systemd:
-    name: graphical.target
-    state: started
-  when: ansible_os_family == 'RedHat' and "'graphical.target' not in systemd_units.stdout"
-  tags: rh-set-graphical
+    cmd: /opt/sliver/sliver-server unpack --force
+  become: true
+  become_user: sliver

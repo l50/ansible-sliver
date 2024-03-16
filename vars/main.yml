@@ -1,6 +1,21 @@
 ---
-deb_packages:
+sliver_common_install_packages:
+  - make
+  - wget
+  - unzip
+
+sliver_debian_packages:
   - apt-utils
+  - build-essential
   - curl
   - gpg-agent
   - packaging-dev
+  - zlib1g
+  - zlib1g-dev
+  - zip
+
+sliver_el_packages:
+  - git
+  - zlib
+  - zlib-devel
+  - zip
