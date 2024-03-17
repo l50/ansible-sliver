@@ -3,24 +3,31 @@
   ansible.builtin.include_role:
     name: cowdogmoo.workstation.user_setup
   vars:
-    user_setup_default_users:
-      - username: "sliver"
-        usergroup: "sliver"
-        sudo: true
-        shell: "{{ sliver_default_shell }}"
+    user_setup_default_users: [ "{{ sliver_user }}" ]
+
+- name: Check if .bash_profile exists for sliver user
+  ansible.builtin.stat:
+    path: "/home/{{ sliver_user.username }}/.bash_profile"
+  register: bash_profile_stat
+  become: true
+  become_user: sliver
+
+- name: Ensure .bash_profile exists for sliver user
+  ansible.builtin.file:
+    path: "/home/{{ sliver_user.username }}/.bash_profile"
+    state: file
+    owner: sliver
+    group: sliver
+    mode: '0644'
+  become: true
+  become_user: sliver
+  when: not bash_profile_stat.stat.exists
 
 - name: Install asdf and go
   ansible.builtin.include_role:
     name: cowdogmoo.workstation.asdf
   vars:
-    asdf_users:
-      - username: "{{ sliver_default_user }}"
-        usergroup: "{{ sliver_default_group }}"
-        shell: "{{ sliver_default_shell }}"
-        plugins:
-          - name: golang
-            version: '1.22.0'
-            scope: "global"
+    asdf_users: [ "{{ sliver_user }}" ]
 
 - name: Install required packages for Sliver
   ansible.builtin.include_role:
@@ -30,59 +37,49 @@
     package_management_debian_specific_packages: "{{ sliver_debian_packages }}"
     package_management_redhat_specific_packages: "{{ sliver_el_packages }}"
 
-- name: Configure Git to allow /opt/sliver as a safe directory
+- name: Configure Git to allow install_path as a safe directory
   community.general.git_config:
     name: safe.directory
     scope: global
-    value: /opt/sliver
+    value: "{{ install_path }}"
   become: true
 
 - name: Download and build Sliver
   ansible.builtin.git:
     repo: 'https://github.com/bishopfox/sliver.git'
-    dest: /opt/sliver
+    dest: "{{ install_path }}"
     version: master
   become: true
 
-- name: Ensure .bash_profile exists for sliver user
-  ansible.builtin.file:
-    path: /home/sliver/.bash_profile
-    state: file
-    owner: sliver
-    group: sliver
-    mode: '0644'
-  become: true
-  become_user: sliver
-
-- name: Check current ownership of /opt/sliver
+- name: Check current ownership of {{ install_path }}
   ansible.builtin.stat:
-    path: /opt/sliver
+    path: "{{ install_path }}"
   register: sliver_stat
   become: true
 
-- name: Change ownership of /opt/sliver if needed
+- name: Change ownership of install_path if needed
   ansible.builtin.file:
-    path: /opt/sliver
-    owner: "{{ sliver_default_user }}"
-    group: "{{ sliver_default_group }}"
+    path: "{{ install_path }}"
+    owner: "{{ sliver_user.username }}"
+    group: "{{ sliver_user.usergroup }}"
     recurse: true
     state: directory
   become: true
   register: ownership_change
-  when: sliver_stat.stat.pw_name != sliver_default_user or sliver_stat.stat.gr_name != sliver_default_group
+  when: sliver_stat.stat.pw_name != sliver_user.username or sliver_stat.stat.gr_name != sliver_user.usergroup
 
-- name: Add /opt/sliver to $PATH
+- name: Add install_path to $PATH
   ansible.builtin.lineinfile:
     path: /etc/profile
-    line: 'export PATH=$PATH:/opt/sliver'
+    line: "export PATH=$PATH:{{ install_path }}"
     insertafter: EOF
-    regexp: '^export PATH=.*:/opt/sliver.*$'
+    regexp: "^export PATH=.*:{{ install_path }}.*$"
   become: true
 
 - name: Build Sliver with a custom PATH
   ansible.builtin.command:
     cmd: gmake
-    chdir: /opt/sliver
+    chdir: "{{ install_path }}"
   environment:
     PATH: "/home/sliver/.asdf/shims:{{ ansible_env.PATH }}"
   become: true
@@ -93,7 +90,7 @@
 
 - name: Unpack Sliver server
   ansible.builtin.command:
-    cmd: /opt/sliver/sliver-server unpack --force
+    cmd: "{{ install_path }}/sliver-server unpack --force"
   become: true
   become_user: sliver
   changed_when: false

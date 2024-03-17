@@ -7,42 +7,31 @@
       ansible.builtin.include_vars:
         file: "../../defaults/main.yml"
 
-    - name: Include main variables
-      ansible.builtin.include_vars:
-        file: "../../vars/main.yml"
-
     - name: Check if Sliver server is installed
       ansible.builtin.stat:
-        path: /usr/local/bin/sliver-server
+        path: "{{ install_path }}/sliver-server"
       register: sliver_server
 
     - name: Check if Sliver client is installed
       ansible.builtin.stat:
-        path: /usr/local/bin/sliver-client
+        path: "{{ install_path }}/sliver-client"
       register: sliver_client
 
-    # - name: Check user exists
-    #   ansible.builtin.command: "id -un {{ item.username }}"
-    #   register: user_check
-    #   changed_when: false
-    #   failed_when: user_check.rc != 0
-    #   loop: "{{ user_setup_default_users }}"
-    #   loop_control:
-    #     label: "{{ item.username }}"
+    - name: Check user exists
+      ansible.builtin.command: "id -un {{ sliver_user.username }}"
+      register: user_check
+      changed_when: false
+      failed_when: user_check.rc != 0
 
-    # - name: Check user is in sudoers.d
-    #   ansible.builtin.stat:
-    #     path: "/etc/sudoers.d/{{ item.username }}"
-    #   register: sudoers_file_check
-    #   changed_when: false
-    #   failed_when: not sudoers_file_check.stat.exists
-    #   loop: "{{ user_setup_default_users }}"
-    #   when: item.sudo
-    #   loop_control:
-    #     label: "{{ item.username }}"
+    - name: Check user is in sudoers.d
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ sliver_user.username }}"
+      register: sudoers_file_check
+      changed_when: false
+      failed_when: not sudoers_file_check.stat.exists
 
-    # - name: Assert that Sliver server and client are installed
-    #   ansible.builtin.assert:
-    #     that:
-    #       - sliver_server.stat.exists
-    #       - sliver_client.stat.exists
+    - name: Assert that Sliver server and client are installed
+      ansible.builtin.assert:
+        that:
+          - sliver_server.stat.exists
+          - sliver_client.stat.exists
