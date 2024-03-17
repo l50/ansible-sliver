@@ -15,7 +15,7 @@
 - name: Ensure .bash_profile exists for sliver user
   ansible.builtin.file:
     path: "/home/{{ sliver_user.username }}/.bash_profile"
-    state: file
+    state: touch
     owner: sliver
     group: sliver
     mode: '0644'
@@ -81,7 +81,7 @@
     cmd: gmake
     chdir: "{{ install_path }}"
   environment:
-    PATH: "/home/sliver/.asdf/shims:{{ ansible_env.PATH }}"
+    PATH: "/home/{{ sliver_user.username }}/.asdf/shims:{{ ansible_env.PATH }}"
   become: true
   become_user: sliver
   become_flags: -i
@@ -94,3 +94,19 @@
   become: true
   become_user: sliver
   changed_when: false
+
+- name: Generate operator configs for users
+  ansible.builtin.shell:
+    cmd: |
+      {{ install_path }}/sliver-server operator --name {{ sliver_user.username }} \
+      --lhost localhost --save "{{ install_path }}/sliver-client/configs"
+      chown -R {{ sliver_user.username }}:"{{ sliver_user.usergroup }}" "{{ install_path }}/sliver-client"
+  become: true
+  args:
+    executable: /bin/bash
+  changed_when: "'configs saved' in result.stdout"
+  register: result
+
+- name: Include systemd tasks
+  ansible.builtin.include_tasks: systemd.yml
+  when: setup_systemd | bool
