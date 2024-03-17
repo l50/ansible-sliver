@@ -7,7 +7,7 @@
       - username: "sliver"
         usergroup: "sliver"
         sudo: true
-        shell: "{{ sliver_default_shell}}"
+        shell: "{{ sliver_default_shell }}"
 
 - name: Install asdf and go
   ansible.builtin.include_role:
@@ -31,8 +31,10 @@
     package_management_redhat_specific_packages: "{{ sliver_el_packages }}"
 
 - name: Configure Git to allow /opt/sliver as a safe directory
-  ansible.builtin.shell:
-    cmd: git config --global --add safe.directory /opt/sliver
+  community.general.git_config:
+    name: safe.directory
+    scope: global
+    value: /opt/sliver
   become: true
 
 - name: Download and build Sliver
@@ -42,68 +44,56 @@
     version: master
   become: true
 
-- name: Change ownership of /opt/sliver
+- name: Ensure .bash_profile exists for sliver user
   ansible.builtin.file:
-    path: /opt/sliver
-    owner: "{{ sliver_default_user }}"
-    group: "{{ sliver_default_group }}"
-    recurse: true
-  become: true
-
-- name: Add /opt/sliver to $PATH
-  ansible.builtin.lineinfile:
-    path: /etc/profile
-    line: 'export PATH=$PATH:/opt/sliver'
-    insertafter: EOF
-  become: true
-
-- name: Ensure .profile exists for sliver user
-  ansible.builtin.file:
-    path: /home/sliver/.profile
-    state: touch
+    path: /home/sliver/.bash_profile
+    state: file
     owner: sliver
     group: sliver
     mode: '0644'
   become: true
   become_user: sliver
 
-- name: Set GOPATH and PATH environment variables
+- name: Check current ownership of /opt/sliver
+  ansible.builtin.stat:
+    path: /opt/sliver
+  register: sliver_stat
+  become: true
+
+- name: Change ownership of /opt/sliver if needed
+  ansible.builtin.file:
+    path: /opt/sliver
+    owner: "{{ sliver_default_user }}"
+    group: "{{ sliver_default_group }}"
+    recurse: true
+    state: directory
+  become: true
+  register: ownership_change
+  when: sliver_stat.stat.pw_name != sliver_default_user or sliver_stat.stat.gr_name != sliver_default_group
+
+- name: Add /opt/sliver to $PATH
   ansible.builtin.lineinfile:
-    path: /home/sliver/.profile
-    line: "{{ item }}"
+    path: /etc/profile
+    line: 'export PATH=$PATH:/opt/sliver'
     insertafter: EOF
-  loop:
-    - 'export GOPATH=/home/sliver/.asdf/installs/golang/1.22.0/packages'
-    - 'export PATH=/home/sliver/.asdf/shims:$PATH:$GOPATH/bin'
+    regexp: '^export PATH=.*:/opt/sliver.*$'
   become: true
-  become_user: sliver
-
-- name: Debug PATH environment variable
-  ansible.builtin.shell:
-    cmd: echo $PATH
-    chdir: /opt/sliver
-  become: true
-  become_user: sliver
-  register: debug_output
-
-- name: Print debug output
-  ansible.builtin.debug:
-    msg: "{{ debug_output.stdout }}"
-
 
 - name: Build Sliver with a custom PATH
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: gmake
     chdir: /opt/sliver
   environment:
     PATH: "/home/sliver/.asdf/shims:{{ ansible_env.PATH }}"
   become: true
   become_user: sliver
-
-
+  become_flags: -i
+  register: gmake_result
+  changed_when: "'Some specific output' in gmake_result.stdout"
 
 - name: Unpack Sliver server
   ansible.builtin.command:
     cmd: /opt/sliver/sliver-server unpack --force
   become: true
   become_user: sliver
+  changed_when: false
