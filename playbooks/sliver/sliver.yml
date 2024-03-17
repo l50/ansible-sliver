@@ -2,4 +2,4 @@
 - name: Install Sliver on all hosts
   hosts: all
   roles:
-    - role: sliver
+    - role: l50.sliver
