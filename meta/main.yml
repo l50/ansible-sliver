@@ -22,3 +22,4 @@ galaxy_info:
     - offsec
 dependencies:
   - role: cowdogmoo.workstation.package_management
+  - role: cowdogmoo.workstation.asdf
