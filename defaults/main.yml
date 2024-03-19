@@ -1,12 +1,14 @@
 ---
 install_path: /opt/sliver
 setup_systemd: false
-sliver_user:
-  username: "sliver"
-  usergroup: "sliver"
-  sudo: true
-  shell: /bin/bash
-  plugins:
-    - name: golang
-      version: '1.22.0'
-      scope: "global"
+
+# Users to setup with sliver
+sliver_users:
+  - username: sliver
+    usergroup: sliver
+    shell: "/bin/bash"
+    sudo: true
+    plugins:
+      - name: golang
+        version: "1.22.0"
+        scope: "global"
