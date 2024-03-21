@@ -33,7 +33,7 @@ jobs:
           ln -s $PWD $HOME/.ansible/roles/l50/sliver
 
       - name: Run Molecule Test
-        run: molecule test
+        run: molecule converge && molecule verify
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
