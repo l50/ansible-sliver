@@ -5,6 +5,13 @@
 [![Ansible Galaxy](https://img.shields.io/badge/Galaxy-sliver-660198.svg?style=flat)](https://galaxy.ansible.com/l50/sliver)
 [![License](https://img.shields.io/github/license/l50/ansible-sliver?label=License&style=flat&color=blue&logo=github)](https://github.com/l50/ansible-sliver/blob/master/LICENSE)
 
+## Deprecated
+
+This role has been moved to [https://github.com/l50/ansible-collection-arsenal/tree/main/roles/sliver](https://github.com/l50/ansible-collection-arsenal/tree/main/roles/sliver).
+
+---
+
+
 This role installs [Sliver](https://github.com/BishopFox/sliver.git)
 on Linux hosts.
 
